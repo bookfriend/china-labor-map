@@ -78,9 +78,9 @@
 <header>
   <div class="wrap">
     <h1>中国劳工争议分布图</h1>
-    <p>基于人社部统计公报、省级人社厅公报、最高人民法院典型案例等<strong>公开信源</strong>的劳动争议数据可视化</p>
+    <p>基于人社部统计公报、省级人社厅公报、法院审判数据、工会维权数据、最高人民法院典型案例等<strong>公开信源</strong>的劳动争议数据可视化</p>
     <p>点击地图上的省份，查看该省已核实的仲裁数据与代表性劳资纠纷案例（均附出处）</p>
-    <div class="meta">数据调研日期：2026-09-26 ｜ 每个数字均注明来源 ｜ 未找到公开数据的省份如实标注，不做估算</div>
+    <div class="meta">数据调研日期：2026-09-27 ｜ 每个数字均注明来源 ｜ 未找到公开数据的省份如实标注，不做估算</div>
   </div>
 </header>
 
@@ -124,10 +124,33 @@
   </section>
 
   <section>
+    <h2 class="sec">诉讼环节：法院数据</h2>
+    <p class="sub">仲裁之后进入法院一审的劳动争议量。法院受理数与仲裁立案数是不同环节、不同口径，不可直接相加或对比。</p>
+    <div class="card" id="courtList"></div>
+    <div class="card" id="caselibNote" style="margin-top:12px;background:#f9fafb"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">欠薪治理：劳动监察与冬季行动</h2>
+    <p class="sub">行政执法环节的数据：劳动保障监察结案与追发工资，以及每年冬季治理欠薪专项行动战果。</p>
+    <div class="card" id="wageList"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">工会维权</h2>
+    <p class="sub">工会组织参与办理的职工争议与调解案件量。</p>
+    <div class="card" id="unionList"></div>
+  </section>
+
+  <section>
     <h2 class="sec">数据缺口与方法说明</h2>
     <div class="card" style="font-size:15px">
       <ul style="margin:0;padding-left:20px">
         <li><strong>28省仲裁数缺失</strong>：《中国劳动统计年鉴》含省级分表但无公开全文；国家统计局数据库本次无法访问；各省人社厅年度公报需逐省采集——这是后续补全地图最可行的路径。</li>
+        <li><strong>法院数据已补诉讼环节</strong>：全国2025年上半年一审受理43.6万件（同比+40.17%）、广东2025年审结8.8万件；但江苏、浙江、上海、四川的省级法院劳动争议专项数仍未检得。</li>
+        <li><strong>工会与举报投诉</strong>：工会维权已补全国（80.7万件）与北京（2.4万件调解）；省市人社部门官方「劳动保障举报投诉案件量」仍未检得。</li>
+        <li><strong>农民工监测</strong>：《2024年农民工监测调查报告》的被欠薪比例、劳动合同签订率未检得（该报告可能已不再发布这两项指标）。</li>
+        <li><strong>人民法院案例库</strong>：是最高法审核的精选示范案例库（5,040件），不是裁判文书总量，不可当作案件规模指标。</li>
         <li><strong>CLB罢工地图</strong>：官网本次无法访问，仅得转引的全国总数（2023年1,794起、2024年1,509起）与年份不一致的分省片段，<strong>不能拼成统一年度地图</strong>；CLB自估仅捕捉实际事件的5%–10%。</li>
         <li><strong>信访 / 工伤认定</strong>：未找到全国统一的按省公开数据（检索多为纪检监察口径，不可混用）。</li>
         <li><strong>二手信源已标注</strong>：凡标注 <span class="caution">需谨慎</span> 的条目来自二手劳工媒体或转引数据，官方未证实，仅供背景参考。</li>
@@ -138,14 +161,14 @@
 
   <section>
     <h2 class="sec">数据来源</h2>
-    <p class="sub">全部 22 项参考文献，点击可跳转原文</p>
+    <p class="sub">全部 28 项参考文献，点击可跳转原文</p>
     <div class="card"><ol class="refs" id="refList" style="margin:0;padding-left:20px"></ol></div>
   </section>
 </div>
 
 <footer>
   <div class="wrap">
-    本页面所有数据来自 2026-09-26 当日的公开网络检索，数字与案例均附原始出处；缺失数据如实标注、未做估算。
+    本页面所有数据来自 2026-09-27 当日的公开网络检索，数字与案例均附原始出处；缺失数据如实标注、未做估算。
     页面仅作信息可视化，不构成法律意见。数据口径差异已在页内说明，引用时请核对原始公报。
   </div>
 </footer>
@@ -256,6 +279,7 @@
         <div class="stat" style="background:#fff7ed;border-color:#fed7aa"><div class="num" style="color:var(--amber)">168.6<span style="font-size:16px">万件</span></div>
           <div class="lbl">2024年全国「仲裁机构立案受理」（口径A）——与口径B不可混用</div></div>
         <p style="font-size:14px;color:var(--muted)">2017→2025年案件量增长约173%，2024–2025年增速放缓但绝对量仍处历史高位。
+        诉讼环节：2025年上半年全国法院受理劳动争议一审43.6万件，同比上升40.17%。
         目前仅 <b style="color:var(--red)">北京、广东、四川</b> 3省有公开可核实的省级仲裁数字；另有 10 省有官方典型案例或法院阶段数据；其余省份暂无公开可核实数据。</p>`;
       return;
     }
@@ -299,6 +323,25 @@
       <a href="${v.arb.url}" target="_blank" rel="noopener" style="margin-left:auto;font-size:13px;color:var(--red);white-space:nowrap">出处 ↗</a>
     </div>`).join("") +
     `<p style="font-size:13.5px;color:var(--muted);margin:12px 0 0">⚠ 三省口径、年份均不相同，此处仅罗列已核实数字，不做跨省排名解读。</p>`;
+
+  // 新增维度：法院 / 欠薪治理 / 工会
+  function dimList(el, arr){
+    document.getElementById(el).innerHTML = arr.map(d=>`
+      <div class="rank"><b style="min-width:3em">${d.place}</b>
+        <span class="v">${d.value}</span>
+        <span class="c">${d.year} · ${d.desc}${d.caution?'<span class="caution">口径注意</span>':''}<br>来源：${d.source}</span>
+        <a href="${d.url}" target="_blank" rel="noopener" style="margin-left:auto;font-size:13px;color:var(--red);white-space:nowrap">出处 ↗</a>
+      </div>`).join("");
+  }
+  if(D.courts) dimList("courtList", D.courts);
+  if(D.wage_arrears) dimList("wageList", D.wage_arrears);
+  if(D.union) dimList("unionList", D.union);
+  if(D.caselib){
+    document.getElementById("caselibNote").innerHTML =
+      `<div style="font-size:14.5px"><strong>人民法院案例库：${D.caselib.value}</strong>（${D.caselib.asof}）<br>
+       <span style="color:var(--muted)">${D.caselib.desc}</span><br>
+       <a href="${D.caselib.url}" target="_blank" rel="noopener" style="color:var(--red);font-size:13px">来源：${D.caselib.source} ↗</a></div>`;
+  }
 
   // 趋势图
   const t = D.trend, W=900, H=380, padL=56, padB=44, padT=30;
