@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国劳工争议分布图 · 基于公开仲裁与司法数据</title>
+<meta name="description" content="基于人社部公报、省级人社厅公报、最高法典型案例等公开信源的中国各省劳动争议数据可视化。">
+<style>
+  :root{
+    --red:#b91c1c; --red-d:#7f1d1d; --amber:#d97706; --ink:#1f2937;
+    --muted:#6b7280; --line:#e5e7eb; --bg:#fafafa; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7}
+  header{background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;padding:40px 20px 34px}
+  header .wrap{max-width:1100px;margin:0 auto}
+  header h1{margin:0 0 10px;font-size:clamp(24px,4vw,36px);letter-spacing:.04em}
+  header p{margin:6px 0;opacity:.92;font-size:15px}
+  header .meta{font-size:13px;opacity:.75;margin-top:12px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+  .warn{background:#fef3c7;border:1px solid #fcd34d;border-left:6px solid var(--amber);
+        border-radius:8px;padding:14px 18px;margin:22px 0;font-size:14.5px}
+  .warn strong{color:#92400e}
+  .layout{display:flex;gap:22px;align-items:flex-start;margin:6px 0 30px}
+  .map-card{flex:1 1 62%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative;min-width:0}
+  #map{width:100%;height:auto;display:block}
+  .province{cursor:pointer;stroke:#fff;stroke-width:1;transition:fill .15s}
+  .province:hover{stroke:#111827;stroke-width:1.6}
+  .province.selected{stroke:#111827;stroke-width:2.2}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:8px 4px 2px;font-size:13.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:3px;border:1px solid #d1d5db;display:inline-block}
+  #tooltip{position:fixed;pointer-events:none;background:#111827;color:#fff;font-size:13px;
+           padding:8px 12px;border-radius:8px;display:none;z-index:50;max-width:260px;line-height:1.5;
+           box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .panel{flex:1 1 38%;background:var(--card);border:1px solid var(--line);border-radius:12px;
+         padding:20px 22px;min-width:0;position:sticky;top:16px;max-height:82vh;overflow:auto}
+  .panel h2{margin:0 0 4px;font-size:22px}
+  .panel .tag{display:inline-block;font-size:12.5px;border-radius:20px;padding:2px 12px;margin:6px 0 10px}
+  .tag.verified{background:#fee2e2;color:#991b1b}
+  .tag.cases{background:#fef3c7;color:#92400e}
+  .tag.none{background:#f3f4f6;color:#6b7280}
+  .stat{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin:12px 0}
+  .stat .num{font-size:30px;font-weight:800;color:var(--red)}
+  .stat .lbl{font-size:13px;color:var(--muted)}
+  .case{border-top:1px dashed var(--line);padding:10px 0;font-size:14.5px}
+  .case a{color:var(--red);text-decoration:none;font-size:13px}
+  .case a:hover{text-decoration:underline}
+  .caution{display:inline-block;background:#fef3c7;color:#92400e;font-size:12px;border-radius:4px;padding:1px 8px;margin-left:6px}
+  .btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:14px;cursor:pointer;margin-top:10px}
+  .btn:hover{background:var(--red-d)}
+  section{margin:34px 0}
+  section h2.sec{font-size:21px;margin:0 0 4px;padding-bottom:8px;border-bottom:3px solid var(--red);display:inline-block}
+  section .sub{color:var(--muted);font-size:14px;margin:8px 0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d;border-radius:20px;padding:6px 16px;font-size:14px}
+  .rank{display:flex;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:15px}
+  .rank:last-child{border-bottom:none}
+  .rank .v{font-size:22px;font-weight:800;color:var(--red)}
+  .rank .c{font-size:12.5px;color:var(--muted)}
+  .refs{columns:2;column-gap:32px;font-size:13.5px}
+  .refs li{break-inside:avoid;margin-bottom:8px}
+  .refs a{color:#1d4ed8;text-decoration:none;word-break:break-all}
+  .refs a:hover{text-decoration:underline}
+  footer{background:#111827;color:#9ca3af;padding:26px 20px;font-size:13px;margin-top:40px}
+  footer .wrap{max-width:1100px}
+  #trend{width:100%;height:auto;display:block}
+  @media(max-width:860px){
+    .layout{flex-direction:column}
+    .panel{position:static;max-height:none;width:100%}
+    .refs{columns:1}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>中国劳工争议分布图</h1>
+    <p>基于人社部统计公报、省级人社厅公报、最高人民法院典型案例等<strong>公开信源</strong>的劳动争议数据可视化</p>
+    <p>点击地图上的省份，查看该省已核实的仲裁数据与代表性劳资纠纷案例（均附出处）</p>
+    <div class="meta">数据调研日期：2026-09-26 ｜ 每个数字均注明来源 ｜ 未找到公开数据的省份如实标注，不做估算</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="warn">
+    <strong>⚠ 口径警告（阅读地图前必看）：</strong>
+    人社部统计有两个不可混用的口径——<strong>口径A「仲裁机构立案受理」</strong>（2024年全国168.6万件）与
+    <strong>口径B「调解组织和仲裁机构共办理」</strong>（2025年全国454.3万件）。
+    本页北京14.3万件为口径A，广东92.8万件、四川17.5万件为口径B。
+    因此地图<strong>不按案件数量着色</strong>，而是按「数据可得性」分层，避免把不同口径的数字放在同一色阶里误导对比。
+  </div>
+
+  <div class="layout">
+    <div class="map-card">
+      <svg id="map" viewBox="0 0 1000 700" role="img" aria-label="中国省份地图"></svg>
+      <div class="legend">
+        <span><i class="sw" style="background:#b91c1c"></i>有核实仲裁数字（3省）</span>
+        <span><i class="sw" style="background:#d97706"></i>仅有官方案例 / 司法数据（10省）</span>
+        <span><i class="sw" style="background:#e8eaed"></i>未检得公开可核实数据</span>
+      </div>
+    </div>
+    <aside class="panel" id="panel"></aside>
+  </div>
+
+  <section>
+    <h2 class="sec">已核实的省级仲裁数字</h2>
+    <p class="sub">目前仅 3 个省份有公开可核实的仲裁案件数（口径已分别标注，不可直接横向对比）。28 个省份的仲裁立案数在公开渠道未能检得，本页未做任何估算。</p>
+    <div class="card" id="rankList"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">全国趋势：劳动争议案件量</h2>
+    <p class="sub">口径B「调解组织和仲裁机构共办理」（万件）。数据来自人社部历年《人力资源和社会保障事业发展统计公报》，经媒体汇总整理，建议复核原始公报。2024年口径A「仲裁机构立案受理」全国为168.6万件。</p>
+    <div class="card"><svg id="trend" viewBox="0 0 900 380" role="img" aria-label="2017-2025年全国劳动争议案件趋势"></svg></div>
+  </section>
+
+  <section>
+    <h2 class="sec">主要纠纷类型</h2>
+    <p class="sub">综合人社部公报、最高法典型案例与各地法院通报归纳</p>
+    <div class="chips" id="typeChips"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">数据缺口与方法说明</h2>
+    <div class="card" style="font-size:15px">
+      <ul style="margin:0;padding-left:20px">
+        <li><strong>28省仲裁数缺失</strong>：《中国劳动统计年鉴》含省级分表但无公开全文；国家统计局数据库本次无法访问；各省人社厅年度公报需逐省采集——这是后续补全地图最可行的路径。</li>
+        <li><strong>CLB罢工地图</strong>：官网本次无法访问，仅得转引的全国总数（2023年1,794起、2024年1,509起）与年份不一致的分省片段，<strong>不能拼成统一年度地图</strong>；CLB自估仅捕捉实际事件的5%–10%。</li>
+        <li><strong>信访 / 工伤认定</strong>：未找到全国统一的按省公开数据（检索多为纪检监察口径，不可混用）。</li>
+        <li><strong>二手信源已标注</strong>：凡标注 <span class="caution">需谨慎</span> 的条目来自二手劳工媒体或转引数据，官方未证实，仅供背景参考。</li>
+        <li>法院阶段数据（如湖南31.4万件）是诉讼环节受理量，与仲裁立案不是同一口径，不可代入仲裁地图。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">数据来源</h2>
+    <p class="sub">全部 22 项参考文献，点击可跳转原文</p>
+    <div class="card"><ol class="refs" id="refList" style="margin:0;padding-left:20px"></ol></div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    本页面所有数据来自 2026-09-26 当日的公开网络检索，数字与案例均附原始出处；缺失数据如实标注、未做估算。
+    页面仅作信息可视化，不构成法律意见。数据口径差异已在页内说明，引用时请核对原始公报。
+  </div>
+</footer>
+
+<div id="tooltip"></div>
+
+<script src="geo.js"></script>
+<script src="province_data.js"></script>
+<script>
+(function(){
+  const D = window.PROV_DATA, GEO = window.CHINA_GEO;
+  const NAME_MAP = {"北京市":"北京","天津市":"天津","河北省":"河北","山西省":"山西","内蒙古自治区":"内蒙古",
+    "辽宁省":"辽宁","吉林省":"吉林","黑龙江省":"黑龙江","上海市":"上海","江苏省":"江苏","浙江省":"浙江",
+    "安徽省":"安徽","福建省":"福建","江西省":"江西","山东省":"山东","河南省":"河南","湖北省":"湖北",
+    "湖南省":"湖南","广东省":"广东","广西壮族自治区":"广西","海南省":"海南","重庆市":"重庆","四川省":"四川",
+    "贵州省":"贵州","云南省":"云南","西藏自治区":"西藏","陕西省":"陕西","甘肃省":"甘肃","青海省":"青海",
+    "宁夏回族自治区":"宁夏","新疆维吾尔自治区":"新疆","台湾省":"台湾","香港特别行政区":"香港",
+    "澳门特别行政区":"澳门","南海十段线":"南海十段线"};
+  const TIER_COLOR = {verified:"#b91c1c", cases:"#d97706", none:"#e8eaed"};
+  const TIER_LABEL = {verified:"有核实仲裁数字", cases:"仅有官方案例 / 司法数据", none:"未检得公开可核实数据"};
+
+  const proj = (lng,lat)=>[ (lng-73)/63*1000, (54-lat)/36*700 ];
+  const ringPath = r => r.map((p,i)=> (i?"L":"M") + proj(p[0],p[1]).map(n=>n.toFixed(1)).join(" ")).join(" ") + " Z";
+  const svg = document.getElementById("map");
+  const NS = "http://www.w3.org/2000/svg";
+  const tooltip = document.getElementById("tooltip");
+  const panel = document.getElementById("panel");
+
+  function centroid(coords){
+    let xs=[],ys=[];
+    (function walk(c){ if(typeof c[0]==="number"){xs.push(c[0]);ys.push(c[1]);} else c.forEach(walk); })(coords);
+    return [xs.reduce((a,b)=>a+b,0)/xs.length, ys.reduce((a,b)=>a+b,0)/ys.length];
+  }
+
+  let selected = null;
+  GEO.features.forEach(f=>{
+    const full = f.properties.name, short = NAME_MAP[full] || full;
+    const g = f.geometry;
+    if(full === "南海十段线"){
+      // draw as thin red line segments
+      const polys = g.type==="MultiPolygon" ? g.coordinates : [g.coordinates];
+      polys.forEach(poly=>{
+        poly.forEach(ring=>{
+          const pl = document.createElementNS(NS,"polyline");
+          pl.setAttribute("points", ring.map(p=>proj(p[0],p[1]).map(n=>n.toFixed(1)).join(",")).join(" "));
+          pl.setAttribute("fill","none"); pl.setAttribute("stroke","#991b1b");
+          pl.setAttribute("stroke-width","2"); pl.setAttribute("stroke-linejoin","round");
+          svg.appendChild(pl);
+        });
+      });
+      return;
+    }
+    const path = document.createElementNS(NS,"path");
+    const polys = g.type==="MultiPolygon" ? g.coordinates : [g.coordinates];
+    path.setAttribute("d", polys.map(poly=>poly.map(ringPath).join(" ")).join(" "));
+    const info = D.provinces[short];
+    const tier = info ? info.tier : "none";
+    path.setAttribute("fill", TIER_COLOR[tier]);
+    path.setAttribute("class","province");
+    path.dataset.name = short;
+    path.addEventListener("mousemove", e=>{
+      const tip = info && info.arb
+        ? `<b>${short}</b><br>仲裁 ${info.arb.value}${info.arb.unit}（${info.arb.year}年·口径${info.arb.caliber}）`
+        : `<b>${short}</b><br>${TIER_LABEL[tier]}`;
+      tooltip.innerHTML = tip; tooltip.style.display = "block";
+      tooltip.style.left = (e.clientX+14)+"px"; tooltip.style.top = (e.clientY+14)+"px";
+    });
+    path.addEventListener("mouseleave", ()=> tooltip.style.display="none");
+    path.addEventListener("click", ()=> select(short, path));
+    svg.appendChild(path);
+  });
+
+  // province name labels for large provinces (avoid clutter: label all, tiny)
+  GEO.features.forEach(f=>{
+    const full=f.properties.name; if(full==="南海十段线") return;
+    const short = NAME_MAP[full]||full;
+    const [cx,cy] = centroid(f.geometry.coordinates);
+    const [x,y] = proj(cx,cy);
+    const t = document.createElementNS(NS,"text");
+    t.setAttribute("x",x); t.setAttribute("y",y);
+    t.setAttribute("text-anchor","middle"); t.setAttribute("dominant-baseline","middle");
+    t.setAttribute("font-size", ["内蒙古","新疆","西藏","青海","四川","黑龙江","甘肃","云南"].includes(short) ? "15":"11");
+    t.setAttribute("fill", (D.provinces[short]?"#fff":"#9ca3af"));
+    t.setAttribute("pointer-events","none");
+    t.textContent = short;
+    svg.appendChild(t);
+  });
+
+  function select(name, el){
+    document.querySelectorAll(".province.selected").forEach(p=>p.classList.remove("selected"));
+    if(el) el.classList.add("selected");
+    selected = name;
+    renderPanel(name);
+  }
+
+  function caseHtml(c){
+    return `<div class="case">${c.text}${c.caution?'<span class="caution">需谨慎</span>':''}<br>
+      <a href="${c.url}" target="_blank" rel="noopener">来源：${c.source} ↗</a></div>`;
+  }
+
+  function renderPanel(name){
+    if(!name){ // 全国概览
+      panel.innerHTML = `
+        <h2>全国概览</h2>
+        <span class="tag none">点击地图省份查看详情</span>
+        <div class="stat"><div class="num">454.3<span style="font-size:16px">万件</span></div>
+          <div class="lbl">2025年全国劳动争议「调解组织+仲裁机构共办理」（口径B）<br>涉及劳动者472.1万人 · 结案金额994.7亿元 · 调解成功率81.1%</div></div>
+        <div class="stat" style="background:#fff7ed;border-color:#fed7aa"><div class="num" style="color:var(--amber)">168.6<span style="font-size:16px">万件</span></div>
+          <div class="lbl">2024年全国「仲裁机构立案受理」（口径A）——与口径B不可混用</div></div>
+        <p style="font-size:14px;color:var(--muted)">2017→2025年案件量增长约173%，2024–2025年增速放缓但绝对量仍处历史高位。
+        目前仅 <b style="color:var(--red)">北京、广东、四川</b> 3省有公开可核实的省级仲裁数字；另有 10 省有官方典型案例或法院阶段数据；其余省份暂无公开可核实数据。</p>`;
+      return;
+    }
+    const info = D.provinces[name];
+    if(!info){
+      panel.innerHTML = `<h2>${name}</h2><span class="tag none">未检得公开可核实数据</span>
+        <p style="font-size:14.5px;color:var(--muted)">本次调研（2026-09-26）未能在公开渠道找到${name}的劳动仲裁立案数字或官方典型案例。
+        如该省人社厅发布年度统计公报，可据此补全。</p>
+        <button class="btn" onclick="document.getElementById('panel').dispatchEvent(new CustomEvent('back'))">← 返回全国概览</button>`;
+    } else {
+      const tierTag = info.tier==="verified" ? '<span class="tag verified">有核实仲裁数字</span>' : '<span class="tag cases">仅有官方案例 / 司法数据</span>';
+      let arbHtml = "";
+      if(info.arb){
+        arbHtml = `<div class="stat"><div class="num">${info.arb.value}<span style="font-size:16px">${info.arb.unit}</span></div>
+          <div class="lbl">${info.arb.year}年 · 口径${info.arb.caliber}「${info.arb.caliber_desc}」<br>${info.arb.source}<br>
+          <a href="${info.arb.url}" target="_blank" rel="noopener" style="color:var(--red)">查看原始出处 ↗</a></div></div>`;
+      }
+      panel.innerHTML = `<h2>${name}</h2>${tierTag}${arbHtml}
+        <h3 style="font-size:16px;margin:14px 0 4px">代表性案例（有出处）</h3>
+        ${info.cases.map(caseHtml).join("")}
+        <button class="btn" id="backBtn">← 返回全国概览</button>`;
+      document.getElementById("backBtn").onclick = ()=>{
+        document.querySelectorAll(".province.selected").forEach(p=>p.classList.remove("selected"));
+        renderPanel(null);
+      };
+    }
+  }
+  panel.addEventListener("back", ()=>{ 
+    document.querySelectorAll(".province.selected").forEach(p=>p.classList.remove("selected"));
+    renderPanel(null);
+  });
+  renderPanel(null);
+
+  // 已核实数字排行
+  const verified = Object.entries(D.provinces).filter(([k,v])=>v.arb)
+    .sort((a,b)=>b[1].arb.value-a[1].arb.value);
+  document.getElementById("rankList").innerHTML = verified.map(([name,v])=>`
+    <div class="rank"><b style="min-width:3em">${name}</b>
+      <span class="v">${v.arb.value}${v.arb.unit}</span>
+      <span class="c">${v.arb.year}年 · 口径${v.arb.caliber}「${v.arb.caliber_desc}」<br>${v.arb.source}</span>
+      <a href="${v.arb.url}" target="_blank" rel="noopener" style="margin-left:auto;font-size:13px;color:var(--red);white-space:nowrap">出处 ↗</a>
+    </div>`).join("") +
+    `<p style="font-size:13.5px;color:var(--muted);margin:12px 0 0">⚠ 三省口径、年份均不相同，此处仅罗列已核实数字，不做跨省排名解读。</p>`;
+
+  // 趋势图
+  const t = D.trend, W=900, H=380, padL=56, padB=44, padT=30;
+  const maxV = 500, cw=(W-padL-20)/t.length, bh=v=>(H-padT-padB)*v/maxV;
+  let thtml = `<line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="#9ca3af"/>`;
+  t.forEach((d,i)=>{
+    const x = padL + i*cw + 8, w = cw-22, y = H-padB-bh(d.value);
+    thtml += `<rect x="${x}" y="${y}" width="${w}" height="${bh(d.value)}" rx="4" fill="${i===t.length-1?"#b91c1c":"#fca5a5"}"/>
+      <text x="${x+w/2}" y="${y-8}" text-anchor="middle" font-size="14" font-weight="700" fill="#7f1d1d">${d.value}</text>
+      <text x="${x+w/2}" y="${H-padB+20}" text-anchor="middle" font-size="13" fill="#6b7280">${d.year}</text>`;
+  });
+  [0,100,200,300,400,500].forEach(v=>{
+    const y = H-padB-(H-padT-padB)*v/maxV;
+    thtml += `<line x1="${padL}" y1="${y}" x2="${W-10}" y2="${y}" stroke="#e5e7eb" stroke-dasharray="4"/>
+      <text x="${padL-8}" y="${y+5}" text-anchor="end" font-size="12" fill="#9ca3af">${v}</text>`;
+  });
+  thtml += `<text x="${padL-8}" y="${padT-12}" text-anchor="start" font-size="12" fill="#9ca3af">万件</text>`;
+  document.getElementById("trend").innerHTML = thtml;
+
+  // 纠纷类型
+  document.getElementById("typeChips").innerHTML =
+    D.types.map(x=>`<span class="chip">${x}</span>`).join("");
+
+  // 参考文献
+  document.getElementById("refList").innerHTML =
+    D.references.map((r,i)=>`<li><a href="${r.url}" target="_blank" rel="noopener">[${i+1}] ${r.title}</a></li>`).join("");
+})();
+</script>
+</body>
+</html>
